@@ -127,7 +127,7 @@ func dropWhile[T any](it Iterator[T], drop func(T) bool) Iterator[T] {
 		defer q.Close()
 
 		for v, ok := it.Next(); ok; v, ok = it.Next() {
-			if drop(v) {
+			if !drop(v) {
 				q.Push(v)
 				break
 			}

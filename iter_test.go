@@ -9,6 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestMain(m *testing.M) {
+	// check for goroutine
+	// goleak.VerifyTestMain(m)
+}
+
 func TestMapper(t *testing.T) {
 	type args struct {
 		s      []int
@@ -110,6 +115,8 @@ func BenchmarkMapper(b *testing.B) {
 }
 
 func TestReduce(t *testing.T) {
+	sum := Of(1, 2, 3, 4, 5).Reduce(Add[int])
+	require.Equal(t, 15, sum)
 }
 
 func TestFilter(t *testing.T) {
@@ -176,8 +183,8 @@ func TestTakeWhile(t *testing.T) {
 
 func TestDropWhile(t *testing.T) {
 	it := Of(1, 2, 3, 4, 5)
-	got := it.DropWhile(func(x int) bool { return x > 3 }).Slice()
-	require.Equal(t, []int{4, 5}, got)
+	got := it.DropWhile(func(x int) bool { return x < 3 }).Slice()
+	require.Equal(t, []int{3, 4, 5}, got)
 }
 
 func TestSkip(t *testing.T) {

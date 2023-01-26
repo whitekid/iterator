@@ -1,6 +1,6 @@
 package iter
 
-func C[T any](ch chan T) Iterator[T] {
+func C[T any](ch <-chan T) Iterator[T] {
 	return &withNext[T]{
 		next: func() (v T, ok bool) {
 			v, ok = <-ch

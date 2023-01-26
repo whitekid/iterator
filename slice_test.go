@@ -101,27 +101,7 @@ func TestChunk(t *testing.T) {
 		want [][]int
 	}{
 		{"valid", args{[]int{1, 2, 3, 4, 5}, 2}, [][]int{{1, 2}, {3, 4}, {5}}},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := Chunk(S(tt.arg.s), tt.arg.size).Slice()
-			require.Equal(t, tt.want, got)
-		})
-	}
-}
-
-func TestChunkEx(t *testing.T) {
-	type args struct {
-		s    []int
-		size int
-	}
-
-	tests := [...]struct {
-		name string
-		arg  args
-		want [][]int
-	}{
-		{"valid", args{[]int{1, 2, 3, 4, 5}, 2}, [][]int{{1, 2}, {3, 4}, {5}}},
+		{`valid`, args{[]int{1, 2, 3, 4}, 2}, [][]int{{1, 2}, {3, 4}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -137,8 +117,7 @@ func TestChunkEx(t *testing.T) {
 
 			{
 				it := S(tt.arg.s)
-				chunk := Chunk(it, tt.arg.size)
-				got := slice(chunk)
+				got := Chunk(it, tt.arg.size).Slice()
 				require.Equal(t, tt.want, got)
 			}
 		})
