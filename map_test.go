@@ -134,3 +134,32 @@ func TestMapItems(t *testing.T) {
 		})
 	}
 }
+
+func TestMapEach(t *testing.T) {
+	type args struct {
+		m map[int]string
+	}
+	tests := [...]struct {
+		name string
+		args args
+	}{
+		{`valid`, args{map[int]string{
+			1: "first",
+			2: "second",
+			3: "third",
+		}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			want := make([]string, 0, len(tt.args.m))
+			for _, v := range tt.args.m {
+				want = append(want, v)
+			}
+			slices.SortFunc(want, Asending[string])
+
+			got := make([]string, 0, len(tt.args.m))
+			M(tt.args.m).Each(func(i int, s string) { got = append(got, s) })
+			require.Equal(t, want, SortedFunc(Of(got...), Asending[string]).Slice())
+		})
+	}
+}

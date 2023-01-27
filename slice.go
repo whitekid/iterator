@@ -48,8 +48,8 @@ func Chunk[T any](it Iterator[T], size int) Iterator[[]T] {
 	return &withNext[[]T]{
 		next: func() ([]T, bool) {
 			chunk := make([]T, 0, size)
-			i := 0
-			for ; i < size; i++ {
+
+			for i := 0; i < size; i++ {
 				v, ok := it.Next()
 				if !ok {
 					break
@@ -62,6 +62,10 @@ func Chunk[T any](it Iterator[T], size int) Iterator[[]T] {
 			}
 
 			last = len(chunk) != size
+			if len(chunk) == 0 {
+				return nil, false
+			}
+
 			return chunk, true
 		},
 	}

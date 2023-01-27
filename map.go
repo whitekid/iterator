@@ -8,6 +8,8 @@ type MapIterator[K comparable, V any] interface {
 	Keys() Iterator[K]
 	Values() Iterator[V]
 	Items() Iterator[Item[K, V]]
+
+	Each(func(K, V))
 }
 
 type Item[K comparable, V any] struct {
@@ -47,4 +49,10 @@ func items[K comparable, V any](m map[K]V) Iterator[Item[K, V]] {
 			return item, ok
 		},
 	}
+}
+
+func (m *mapIter[K, V]) Each(each func(K, V)) { mapEach[K, V](m, each) }
+func mapEach[K comparable, V any](m MapIterator[K, V], each func(K, V)) {
+	fanOut(m.Items(), func(item Item[K, V]) { each(item.Key, item.Value) })
+
 }
