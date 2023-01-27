@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -12,6 +13,7 @@ import (
 func TestMain(m *testing.M) {
 	// check for goroutine
 	// goleak.VerifyTestMain(m)
+	os.Exit(m.Run())
 }
 
 func TestMapper(t *testing.T) {
@@ -191,4 +193,19 @@ func TestSkip(t *testing.T) {
 	it := Of(1, 2, 3, 4, 5)
 	got := it.Skip(3).Slice()
 	require.Equal(t, []int{4, 5}, got)
+}
+
+func TestEach(t *testing.T) {
+	want := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	got := []int{}
+	S(want).Each(func(x int) { got = append(got, x) })
+	require.Equal(t, want, got)
+}
+
+func TestEachIdx(t *testing.T) {
+	want := []string{"one", "two", "three", "four", "five"}
+
+	got := []int{}
+	S(want).EachIdx(func(i int, x string) { got = append(got, i) })
+	require.Equal(t, []int{0, 1, 2, 3, 4}, got)
 }
