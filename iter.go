@@ -21,6 +21,7 @@ type Iterator[T any] interface {
 	Reduce(func(T, T) T) T
 	Slice() []T
 	Each(func(T))
+	EachIdx(func(int, T))
 }
 
 type withNext[T any] struct {
@@ -36,6 +37,7 @@ func (it *withNext[T]) Skip(n int) Iterator[T]                { return skip[T](i
 func (it *withNext[T]) Reduce(fn func(T, T) T) T              { return reduce[T](it, fn) }
 func (it *withNext[T]) Slice() (r []T)                        { return slice[T](it) }
 func (it *withNext[T]) Each(fn func(T))                       { each[T](it, fn) }
+func (it *withNext[T]) EachIdx(fn func(int, T))               { eachIdx[T](it, fn) }
 
 // Map map mapper using goroutine
 func Map[T1, T2 any](it Iterator[T1], mapper func(T1) T2) Iterator[T2] {
@@ -168,6 +170,14 @@ func slice[T any](it Iterator[T]) (r []T) {
 
 func each[T any](it Iterator[T], each func(T)) {
 	fanOut(it, func(x T) { each(x) })
+}
+
+func eachIdx[T any](it Iterator[T], each func(int, T)) {
+	i := 0
+	fanOut(it, func(x T) {
+		each(i, x)
+		i++
+	})
 }
 
 func Sorted[T constraints.Ordered](it Iterator[T]) Iterator[T] {
