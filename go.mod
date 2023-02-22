@@ -1,10 +1,10 @@
 module github.com/whitekid/iter
 
-go 1.19
+go 1.20
 
 require (
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/exp v0.0.0-20230126173853-a67bb567ff2e
+	golang.org/x/exp v0.0.0-20230213192124-5e25df0256eb
 )
 
 require (
