@@ -1,6 +1,7 @@
 package iter
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -25,8 +26,7 @@ func TestMap(t *testing.T) {
 		{Key: 1, Value: "first"},
 	},
 		SortedFunc(M(m).Items(),
-			func(a, b Item[int, string]) bool { return Descending(a.Key, b.Key) }).
-			Slice())
+			func(a, b Item[int, string]) int { return Descending(a.Key, b.Key) }).Slice())
 }
 
 func TestMapKeys(t *testing.T) {
@@ -127,10 +127,10 @@ func TestMapItems(t *testing.T) {
 			for k, v := range tt.args.m {
 				want = append(want, Item[int, string]{k, v})
 			}
-			slices.SortFunc(want, func(a, b Item[int, string]) bool { return Asending(a.Key, b.Key) })
+			slices.SortFunc(want, func(a, b Item[int, string]) int { return Asending(a.Key, b.Key) })
 
 			got := M(tt.args.m).Items()
-			require.Equal(t, want, SortedFunc(got, func(a, b Item[int, string]) bool { return Asending(a.Key, b.Key) }).Slice())
+			require.Equal(t, want, SortedFunc(got, func(a, b Item[int, string]) int { return Asending(a.Key, b.Key) }).Slice())
 		})
 	}
 }
@@ -155,11 +155,11 @@ func TestMapEach(t *testing.T) {
 			for _, v := range tt.args.m {
 				want = append(want, v)
 			}
-			slices.SortFunc(want, Asending[string])
+			slices.SortFunc(want, func(a, b string) int { return strings.Compare(a, b) })
 
 			got := make([]string, 0, len(tt.args.m))
 			M(tt.args.m).Each(func(i int, s string) { got = append(got, s) })
-			require.Equal(t, want, SortedFunc(Of(got...), Asending[string]).Slice())
+			require.Equal(t, want, SortedFunc(Of(got...), func(a, b string) int { return strings.Compare(a, b) }).Slice())
 		})
 	}
 }

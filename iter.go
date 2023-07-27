@@ -186,10 +186,10 @@ func Sorted[T constraints.Ordered](it Iterator[T]) Iterator[T] {
 	return S(s)
 }
 
-type Less[T any] func(T, T) bool
+type Less[T any] func(T, T) int
 
-func Asending[T constraints.Ordered](a, b T) bool   { return a < b }
-func Descending[T constraints.Ordered](a, b T) bool { return !Asending(a, b) }
+func Asending[T constraints.Integer | constraints.Float](a, b T) int   { return int(a - b) }
+func Descending[T constraints.Integer | constraints.Float](a, b T) int { return -Asending(a, b) }
 
 func SortedFunc[T any](it Iterator[T], less Less[T]) Iterator[T] {
 	s := it.Slice()

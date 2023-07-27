@@ -163,12 +163,8 @@ func TestSliceWithFilter(t *testing.T) {
 
 func TestSort(t *testing.T) {
 	s := []int{3, 2, 4, 1, 2, 5}
-	require.Equal(t,
-		Sorted(S(s)).Slice(), SortedFunc(S(s),
-			Asending[int]).Slice())
-	require.Equal(t,
-		Reverse(Sorted(S(s))).Slice(), SortedFunc(S(s),
-			Descending[int]).Slice())
+	require.Equal(t, Sorted(S(s)).Slice(), SortedFunc(S(s), Asending[int]).Slice())
+	require.Equal(t, Reverse(Sorted(S(s))).Slice(), SortedFunc(S(s), Descending[int]).Slice())
 }
 
 func TestConcat(t *testing.T) {
