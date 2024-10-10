@@ -53,7 +53,7 @@ func TestSlice(t *testing.T) {
 	{
 		it := Of(s...)
 		it1 := Map(it, func(x int) int { return x * 2 })
-		sum := reduce(it1, Add[int])
+		sum := Reduce(it1, Add[int])
 
 		want := 0
 		for _, v := range s {

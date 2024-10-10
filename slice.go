@@ -1,72 +1,27 @@
 package iter
 
 import (
-	"math"
-	"sync"
+	"iter"
+	"slices"
 )
 
-func S[S ~[]T, T any](s S) Iterator[T] {
-	index := 0
-	return &withNext[T]{
-		next: func() (r T, ok bool) {
-			if index >= len(s) {
-				return r, false
-			}
 
-			index++
-			return s[index-1], true
-		},
-	}
+func Collect[T any](s iter.Seq[T]) (r []T) {
+	return slices.Collect(s)
 }
-func Of[T any](s ...T) Iterator[T] { return S(s) }
 
-func Reverse[T any](it Iterator[T]) Iterator[T] {
-	index := math.MinInt
-	var s []T
-	o := sync.Once{}
+func Reverse[T any](it iter.Seq[T]) iter.Seq[T] {
+	s := Collect(it)
 
-	return &withNext[T]{
-		next: func() (r T, ok bool) {
-			if s != nil && index <= 0 {
-				return r, false
+	return func(yield func(T) bool) {
+		for i := len(s) - 1; i > 0; i-- {
+			if !yield(s[i]) {
+				return
 			}
-
-			o.Do(func() {
-				s = slice(it)
-				index = len(s)
-			})
-
-			index--
-			return s[index], true
-		},
+		}
 	}
 }
 
-func Chunk[T any](it Iterator[T], size int) Iterator[[]T] {
-	last := false
-
-	return &withNext[[]T]{
-		next: func() ([]T, bool) {
-			chunk := make([]T, 0, size)
-
-			for i := 0; i < size; i++ {
-				v, ok := it.Next()
-				if !ok {
-					break
-				}
-				chunk = append(chunk, v)
-			}
-
-			if last {
-				return nil, false
-			}
-
-			last = len(chunk) != size
-			if len(chunk) == 0 {
-				return nil, false
-			}
-
-			return chunk, true
-		},
-	}
+func Chunk[T any](it iter.Seq[T], size int) iter.Seq[[]T] {
+	return slices.Chunk(Collect(it), size)
 }

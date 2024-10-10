@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"iter"
 	"os"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -34,35 +36,9 @@ func TestMapper(t *testing.T) {
 				want[i] = tt.args.mapper(x)
 			}
 
-			{
-				it := Map(S(tt.args.s), tt.args.mapper)
-				got := []int{}
-				for i := 0; i < len(tt.args.s); i++ {
-					v, ok := it.Next()
-					require.True(t, ok)
-					got = append(got, v)
-				}
-
-				_, ok := it.Next()
-				require.False(t, ok, "next() want true but got false, want=%v, got=%v", want, got)
-				require.Equalf(t, want, got, "want %v, got=%v", want, got)
-			}
-
-			{
-				it := Map(S(tt.args.s), tt.args.mapper)
-				got := slice(it)
-				require.Equal(t, want, got)
-			}
-			{
-				want := 0
-				for _, x := range tt.args.s {
-					want += tt.args.mapper(x)
-				}
-
-				it := Map(S(tt.args.s), tt.args.mapper)
-				got := reduce(it, Add[int])
-				require.Equal(t, want, got)
-			}
+			it := Map(slices.Values(tt.args.s), tt.args.mapper)
+			got := Collect(it)
+			require.Equal(t, got, tt.args.s)
 		})
 	}
 }
@@ -78,17 +54,17 @@ func testMapSignle(t require.TestingT, r io.Reader) {
 
 func testMap(t require.TestingT, r io.Reader) {
 	it := Map(splitLine(r), func(s string) int { return wordCount([]byte(s)) })
-	_ = slice(it)
+	_ = Collect(it)
 }
 
-func splitLine(r io.Reader) Iterator[string] {
-	scanner := bufio.NewScanner(r)
-	return &withNext[string]{
-		next: func() (string, bool) {
-			ok := scanner.Scan()
-			text := scanner.Text()
-			return text, ok
-		},
+func splitLine(r io.Reader) iter.Seq[string] {
+	return func(yield func(string) bool) {
+		scanner := bufio.NewScanner(r)
+		for scanner.Scan() {
+			if !yield(scanner.Text()) {
+				break
+			}
+		}
 	}
 }
 
@@ -117,7 +93,8 @@ func BenchmarkMapper(b *testing.B) {
 }
 
 func TestReduce(t *testing.T) {
-	sum := Of(1, 2, 3, 4, 5).Reduce(Add[int])
+	it := Of(1, 2, 3, 4, 5)
+	sum := it.Reduce(Add[int])
 	require.Equal(t, 15, sum)
 }
 
@@ -141,9 +118,7 @@ func TestFilter(t *testing.T) {
 				}
 			}
 
-			it := S(tt.args.s)
-			it = filter(it, tt.args.filter)
-			got := slice(it)
+			got := Of(tt.args.s...).Filter(tt.args.filter).Collect()
 			require.Equal(t, want, got)
 		})
 	}
@@ -151,50 +126,50 @@ func TestFilter(t *testing.T) {
 
 func TestSlice_(t *testing.T) {
 	s := []int{1, 2, 3, 4, 5}
-	got := slice(S(s))
+	got := Collect(slices.Values(s))
 	require.Equal(t, s, got)
 }
 
 func TestSliceWithFilter(t *testing.T) {
 	s := []int{1, 2, 3, 4, 5}
-	got := slice(filter(S(s), Even[int]))
+	got := Collect(Filter(slices.Values(s), Even[int]))
 	require.Equal(t, []int{2, 4}, got)
 }
 
 func TestSort(t *testing.T) {
 	s := []int{3, 2, 4, 1, 2, 5}
-	require.Equal(t, Sorted(S(s)).Slice(), SortedFunc(S(s), Asending[int]).Slice())
-	require.Equal(t, Reverse(Sorted(S(s))).Slice(), SortedFunc(S(s), Descending[int]).Slice())
+	require.Equal(t, Sorted(slices.Values(s)), SortedFunc(slices.Values(s), Asending[int]))
+	require.Equal(t, Reverse(Sorted(slices.Values(s))), SortedFunc(slices.Values(s), Descending[int]))
 }
 
 func TestConcat(t *testing.T) {
-	it := Concat(Of(1, 2, 3), Of(4, 5, 6), Of(7, 8, 9))
-	got := it.Slice()
+	it := Concat(Of(1, 2, 3).Seq(), Of(4, 5, 6).Seq(), Of(7, 8, 9).Seq())
+	got := Collect(it)
 	require.Equal(t, []int{1, 2, 3, 4, 5, 6, 7, 8, 9}, got)
 }
 
 func TestTakeWhile(t *testing.T) {
 	it := Of(1, 2, 3, 4, 5)
-	got := it.TakeWhile(func(x int) bool { return x < 4 }).Slice()
+	got := it.TakeWhile(func(x int) bool { return x < 4 }).Collect()
 	require.Equal(t, []int{1, 2, 3}, got)
 }
 
 func TestDropWhile(t *testing.T) {
 	it := Of(1, 2, 3, 4, 5)
-	got := it.DropWhile(func(x int) bool { return x < 3 }).Slice()
+	got := it.DropWhile(func(x int) bool { return x < 3 }).Collect()
 	require.Equal(t, []int{3, 4, 5}, got)
 }
 
 func TestSkip(t *testing.T) {
 	it := Of(1, 2, 3, 4, 5)
-	got := it.Skip(3).Slice()
+	got := it.Skip(3).Collect()
 	require.Equal(t, []int{4, 5}, got)
 }
 
 func TestEach(t *testing.T) {
 	want := []int{1, 2, 3, 4, 5, 6, 7, 8, 9}
 	got := []int{}
-	S(want).Each(func(x int) { got = append(got, x) })
+	Of(want...).Each(func(x int) { got = append(got, x) })
 	require.Equal(t, want, got)
 }
 
@@ -202,6 +177,6 @@ func TestEachIdx(t *testing.T) {
 	want := []string{"one", "two", "three", "four", "five"}
 
 	got := []int{}
-	S(want).EachIdx(func(i int, x string) { got = append(got, i) })
+	Of(want...).EachIdx(func(i int, x string) { got = append(got, i) })
 	require.Equal(t, []int{0, 1, 2, 3, 4}, got)
 }

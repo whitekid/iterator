@@ -86,7 +86,7 @@ func countWithIterator(t require.TestingT, r io.Reader) int {
 	it := Map(Chunk(splitLine(r), chunkSize), func(x []string) int {
 		return wordCount([]byte(strings.Join(x, "\n")))
 	})
-	return reduce(it, Add[int])
+	return Reduce(it, Add[int])
 }
 
 func BenchmarkWordCount(b *testing.B) {
